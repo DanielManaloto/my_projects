@@ -18,7 +18,7 @@ uint8_t* bitfields_to_bgra(uint8_t *data, int width, int height,
                            uint32_t r_mask, uint32_t g_mask, uint32_t b_mask, uint32_t a_mask, 
                            int bpp);
 
-// Updated header structures
+// Header structures
 #pragma pack(push, 1)
 typedef struct {
     char     signature[2];
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     uint32_t colors_used = 0;
 
     if (dibSize == 12) {
-        // OS/2 BMPv1 / BITMAPCOREHEADER
+        // OS/2 BMPv1 Header
         struct {
             uint32_t size;
             uint16_t width;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
         bpp = core.bit_count;
         printf("Detected OS/2 BMPv1 (Core Header)\n");
     } else {
-        // Windows BMPv3+ (Your existing logic)
+        // Windows BMPv3+ Header
         struct {
             uint32_t size;
             int32_t  width;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
         printf("Detected Windows BMP\n");
     }
 
-    // --- Bitfield Handling ---
+    // Bitfield Handling
     uint32_t r_mask = 0, g_mask = 0, b_mask = 0, a_mask = 0;
     if (compression == 3) {
         fseek(in, 14 + dibSize, SEEK_SET);
@@ -107,14 +107,14 @@ int main(int argc, char *argv[]) {
         if (dibSize >= 56) fread(&a_mask, 4, 1, in);
     }
 
-    // --- Pixel Data Loading ---
+    // Pixel Data 
     int stride = ((width * bpp + 31) / 32) * 4;
     int data_size = stride * abs(height);
     uint8_t *data = (uint8_t*)malloc(data_size);
     fseek(in, fileHeader.dataOffset, SEEK_SET);
     fread(data, 1, data_size, in);
 
-    // --- Bitfield conversion ---
+    // Bitfield conversion
     if (compression == 3 && (bpp == 16 || bpp == 32)) {
         data = bitfields_to_bgra(data, width, abs(height), r_mask, g_mask, b_mask, a_mask, bpp);
         bpp = 32;
@@ -124,14 +124,14 @@ int main(int argc, char *argv[]) {
     uint8_t *final_raw_data = data;
     int current_bpp = bpp;
 
-    // --- RLE handling ---
+    // RLE handling
     if (compression == 1 || compression == 2) {
         final_raw_data = decompress_rle(data, data_size, width, abs(height), current_bpp);
         free(data);
         current_bpp = 8;
     }
 
-    // --- Palette handling (The tricky part for OS/2) ---
+    // Palette handling
     if (current_bpp <= 8) {
         int num_colors = (colors_used > 0) ? colors_used : (1 << bpp);
         int entry_size = (dibSize == 12) ? 3 : 4; // OS/2 uses 3-byte RGB, Windows uses 4-byte RGBA
@@ -219,7 +219,7 @@ uint8_t* bitfields_to_bgra(uint8_t *data, int width, int height,
     int b_bits = count_bits(b_mask);
     int a_bits = (a_mask) ? count_bits(a_mask) : 0;
 
-    // Calculate the input stride (with padding)
+    // Calculate the input stride with padding
     int in_stride = ((width * bpp + 31) / 32) * 4;
     uint8_t *out_data = (uint8_t*)malloc(width * height * 4);
     
@@ -241,7 +241,7 @@ uint8_t* bitfields_to_bgra(uint8_t *data, int width, int height,
             uint32_t b_raw = (pixel & b_mask) >> b_shift;
             uint32_t a_raw = (a_mask) ? ((pixel & a_mask) >> a_shift) : 0;
 
-            // Pack into 32-bit output (no padding needed for standard 32-bit RGBA in SDL)
+            // Pack into 32-bit output
             int out_idx = (y * width + x) * 4;
             out_data[out_idx + 0] = normalize_to_8bit(b_raw, b_bits);
             out_data[out_idx + 1] = normalize_to_8bit(g_raw, g_bits);
