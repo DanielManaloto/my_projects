@@ -38,4 +38,4 @@ including memory, registers, and instruction execution.
 ## ▶️ Usage
 
 ```bash
-python lc3_vm.py <image-file>
+python lc3.py <image-file>
