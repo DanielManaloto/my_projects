@@ -14,5 +14,3 @@ It can:
 
 
 ## 🚧 Work in Progress
-
-More projects will be added over time.
