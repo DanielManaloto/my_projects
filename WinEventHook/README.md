@@ -1,6 +1,6 @@
-## WinHook
+## WinEventHook
 
-WinHook is a lightweight Windows input recorder and replay utility written in C using the WinAPI.
+WinEventHook is a lightweight Windows input recorder and replay utility written in C using the WinAPI.
 
 It can:
 
